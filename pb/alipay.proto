@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+option go_package = "pb";
+
+package alipay;
+
+// import "google/protobuf/timestamp.proto";
+
+service Alipay {
+    //创建QR交易
+    rpc CreateQRTrade(CreateQRParam) returns (QRTrade) {}
+    //查询QR交易的最新记录
+    rpc QueryQRTrade(QueryQRParam) returns (QRTrade) {}
+    //刷新QR
+    rpc RefreshQR(RefreshQRParam) returns (QRTrade) {}
+    //查询QR交易记录的所有变化
+    rpc QueryQRTrades(QueryQRParam) returns (stream QRTrade) {}
+}
+
+//创建QR交易的数据
+message CreateQRParam {
+    //生成的交易号类型
+    IDType id_type = 1;
+    //付款主题
+    string subject = 2;
+    //总金额
+    int64 amount_in_fen = 3;
+    //回调地址
+    string notify_url = 4;
+}
+
+//查询QR交易的数据
+message QueryQRParam {
+    //生成的交易号类型
+    IDType id_type = 1;
+    //交易号
+    string id = 2;
+}
+
+//刷新QR的数据
+message RefreshQRParam {
+    //生成的交易号类型
+    IDType id_type = 1;
+    //交易号
+    string id = 2;
+}
+
+//ID类型
+enum IDType {
+    ULID = 0;
+}
+
+//QR交易
+message QRTrade {
+    //生成的交易号类型
+    IDType id_type = 1;
+    //交易号
+    string id = 2;
+    string subject = 3;
+    int64 amount_in_fen = 4;
+    string qr_code = 5;
+    TradeDetail detail = 6;
+    TradeStatus status = 7;
+}
+
+//交易详情
+message TradeDetail {
+    string code =1;
+    string msg =2;
+    string sub_code =3;
+    string sub_msg =4;
+    string out_trade_no =5;
+    string qr_code =6;
+    string trade_no =7;
+    string open_id = 8;
+    string buyer_logon_id =9;
+    string trade_status =10;
+    string total_amount =11;
+    string receipt_amount =12;
+    string buyer_pay_amount =13;
+    string point_amount =14;
+    string invoice_amount =15;
+    string send_pay_date =16;
+    string alipay_store_id =17;
+    string store_id =18;
+    string terminal_id =19;
+    string store_name =20;
+    string buyer_user_id =21;
+    repeated FundBillList fund_bill_list =22;
+}
+message FundBillList{
+    string amount =1;
+    string fund_channel =2;
+    string real_amount =3;
+}
+
+//交易状态
+enum TradeStatus { 
+    UNKNOWN	=0;
+    PRECREATE =1; //预创建
+    WAIT=2;
+    SUCCESS=3;
+    FINISHED=4;
+    CLOSED=5;
+}
