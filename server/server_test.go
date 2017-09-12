@@ -4,6 +4,8 @@ import (
 	"log"
 	"testing"
 
+	"github.com/oklog/ulid"
+
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/xy02/alipay/pb"
@@ -33,7 +35,7 @@ func init() {
 	}
 }
 
-func TestServer_CreateQRTrade(t *testing.T) {
+func TestServer_PrecreateTrade(t *testing.T) {
 	// id := []byte("ABC")
 	id := utils.NewULID()
 	trade, err := server.PrecreateTrade(nil, &pb.PrecreateParam{
@@ -49,5 +51,19 @@ func TestServer_CreateQRTrade(t *testing.T) {
 		log.Println(*trade)
 		// log.Println((*trade).Detail)
 	}
+}
 
+func TestServer_QueryTrade(t *testing.T) {
+	// id := []byte("ABC")
+	id := ulid.MustParse("01BSTK5GGQE3S14ZA5SB91DSQY")
+	trade, err := server.QueryTrade(nil, &pb.QueryParam{
+		TradeId: id[:],
+		IdType:  pb.IDType_ULID,
+	})
+	if err != nil {
+		t.Error(err)
+	} else {
+		log.Println(*trade)
+		// log.Println((*trade).Detail)
+	}
 }

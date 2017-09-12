@@ -17,7 +17,7 @@ type TradeDoc struct {
 	QRCode        string         `bson:"qr_code,omitempty"`        //预付款二维码地址，记录最后一个precreate的QR
 	Status        pb.TradeStatus `bson:"status"`                   //最新交易状态
 	StatusChanges []StatusChange `bson:"status_changes,omitempty"` //交易的同步记录
-	Detail        Detail         `bson:"detail,omitempty"`         //交易详情
+	Detail        Detail         `bson:"detail"`                   //交易详情
 }
 
 //StatusChange 交易的状态记录，n:1 TradeDoc

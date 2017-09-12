@@ -3,15 +3,13 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"time"
-
-	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/xy02/alipay/db"
 	"github.com/xy02/alipay/pb"
 	"github.com/xy02/alipay/trade"
 
 	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 //Server 服务器
@@ -34,16 +32,12 @@ func (s *Server) PrecreateTrade(ctx context.Context, param *pb.PrecreateParam) (
 		return nil, err
 	}
 	//获取trade detail
-	detail := pb.TradeDetail{}
-	if err := json.Unmarshal(jsonBytes, &detail); err != nil {
-		return nil, err
-	}
 	detailDoc := db.Detail{}
 	if err := json.Unmarshal(jsonBytes, &detailDoc); err != nil {
 		return nil, err
 	}
 	//持久化
-	doc := &db.TradeDoc{
+	tradeDoc := &db.TradeDoc{
 		ID:          param.TradeId,
 		IDType:      param.IdType,
 		Subject:     param.Subject,
@@ -52,31 +46,47 @@ func (s *Server) PrecreateTrade(ctx context.Context, param *pb.PrecreateParam) (
 		Status:      pb.TradeStatus_PRECREATE,
 		Detail:      detailDoc,
 	}
-	if err := s.tradeCollection.Insert(doc); err != nil {
+	if err := s.tradeCollection.Insert(tradeDoc); err != nil {
 		return nil, err
 	}
-	//return
-	now := time.Now()
-	return &pb.Trade{
-		Id:          param.TradeId,
-		IdType:      param.IdType,
-		Subject:     param.Subject,
-		AmountInFen: param.AmountInFen,
-		QrCode:      detailDoc.QRCode,
-		Detail:      &detail,
-		Status:      pb.TradeStatus_PRECREATE,
-		CreatedAt: &timestamp.Timestamp{
-			Seconds: now.Unix(),
-		},
-	}, nil
+	return parseDoc2Trade(tradeDoc), nil
 }
 
 //QueryTrade 查询
 func (s *Server) QueryTrade(ctx context.Context, param *pb.QueryParam) (*pb.Trade, error) {
-	return nil, nil
+	//查数据库
+	tradeDoc := &db.TradeDoc{}
+	if err := s.tradeCollection.Find(bson.M{
+		db.ID: param.TradeId,
+	}).One(tradeDoc); err != nil {
+		return nil, err
+	}
+	if tradeDoc.Status == pb.TradeStatus_FINISHED || tradeDoc.Status == pb.TradeStatus_CLOSED {
+		//交易已经结束
+		return parseDoc2Trade(tradeDoc), nil
+	}
+	outTradeNo := stringifyID(param.TradeId, param.IdType)
+	jsonBytes, err := s.alipayClient.QueryTrade(outTradeNo)
+	if err != nil {
+		return nil, err
+	}
+	//获取trade detail
+	detailDoc := db.Detail{}
+	if err := json.Unmarshal(jsonBytes, &detailDoc); err != nil {
+		return nil, err
+	}
+	if detailDoc.TradeStatus != tradeDoc.Detail.TradeStatus {
+		//有变化
+		tradeDoc.Detail = detailDoc
+		if err := s.tradeCollection.Update(bson.M{db.ID: param.TradeId}, tradeDoc); err != nil {
+			return nil, err
+		}
+	}
+	return parseDoc2Trade(tradeDoc), nil
 }
 
 //RefreshQR 刷新QR
 func (s *Server) RefreshQR(ctx context.Context, param *pb.RefreshQRParam) (*pb.Trade, error) {
+
 	return nil, nil
 }
