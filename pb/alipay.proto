@@ -4,102 +4,110 @@ option go_package = "pb";
 
 package alipay;
 
-// import "google/protobuf/timestamp.proto";
+import "google/protobuf/timestamp.proto";
 
 service Alipay {
-    //创建QR交易
-    rpc CreateQRTrade(CreateQRParam) returns (QRTrade) {}
-    //查询QR交易的最新记录
-    rpc QueryQRTrade(QueryQRParam) returns (QRTrade) {}
-    //刷新QR
-    rpc RefreshQR(RefreshQRParam) returns (QRTrade) {}
-    //查询QR交易记录的所有变化
-    rpc QueryQRTrades(QueryQRParam) returns (stream QRTrade) {}
+    //创建预交易
+    rpc PrecreateTrade(PrecreateParam) returns (Trade) {}
+    //查询交易
+    rpc QueryTrade(QueryParam) returns (Trade) {}
+    //刷新预交易的QR
+    rpc RefreshQR(RefreshQRParam) returns (Trade) {}
+    // //查询交易的所有QR变化，发现没这种需求，还是注释了吧
+    // rpc QueryQRLogs(QueryQRLogsParam) returns (stream QRLog) {}
 }
 
 //创建QR交易的数据
-message CreateQRParam {
-    //生成的交易号类型
-    IDType id_type = 1;
-    //付款主题
-    string subject = 2;
-    //总金额
-    int64 amount_in_fen = 3;
+message PrecreateParam {
+    //交易号 小于32字节
+    bytes trade_id = 1;
+    //id类型
+    IDType id_type =2;
+    //交易主题
+    string subject = 3;
+    //总金额，单位分
+    int64 amount_in_fen = 4;
     //回调地址
-    string notify_url = 4;
+    string notify_url = 5;
 }
 
 //查询QR交易的数据
-message QueryQRParam {
-    //生成的交易号类型
-    IDType id_type = 1;
+message QueryParam {
     //交易号
-    string id = 2;
+    bytes trade_id = 1;
+    //id类型
+    IDType id_type =2;
 }
 
 //刷新QR的数据
 message RefreshQRParam {
-    //生成的交易号类型
-    IDType id_type = 1;
     //交易号
-    string id = 2;
+    bytes trade_id = 1;
+    //id类型
+    IDType id_type =2;
+}
+
+//交易
+message Trade {
+    //交易号
+    bytes id = 1;
+    //id类型
+    IDType id_type =2;
+    string subject = 3;
+    int64 amount_in_fen = 4;
+    string qr_code = 5;
+    TradeStatus status = 6;
+    repeated StatusChange status_changes = 7;
+    TradeDetail detail = 8;
+    google.protobuf.Timestamp created_at = 9; //同步时间
 }
 
 //ID类型
 enum IDType {
-    ULID = 0;
-}
-
-//QR交易
-message QRTrade {
-    //生成的交易号类型
-    IDType id_type = 1;
-    //交易号
-    string id = 2;
-    string subject = 3;
-    int64 amount_in_fen = 4;
-    string qr_code = 5;
-    TradeDetail detail = 6;
-    TradeStatus status = 7;
-}
-
-//交易详情
-message TradeDetail {
-    string code =1;
-    string msg =2;
-    string sub_code =3;
-    string sub_msg =4;
-    string out_trade_no =5;
-    string qr_code =6;
-    string trade_no =7;
-    string open_id = 8;
-    string buyer_logon_id =9;
-    string trade_status =10;
-    string total_amount =11;
-    string receipt_amount =12;
-    string buyer_pay_amount =13;
-    string point_amount =14;
-    string invoice_amount =15;
-    string send_pay_date =16;
-    string alipay_store_id =17;
-    string store_id =18;
-    string terminal_id =19;
-    string store_name =20;
-    string buyer_user_id =21;
-    repeated FundBillList fund_bill_list =22;
-}
-message FundBillList{
-    string amount =1;
-    string fund_channel =2;
-    string real_amount =3;
+    HEX = 0;
+    UTF8 = 1;
+    ULID = 2;
 }
 
 //交易状态
 enum TradeStatus { 
     UNKNOWN	=0;
     PRECREATE =1; //预创建
-    WAIT=2;
-    SUCCESS=3;
-    FINISHED=4;
-    CLOSED=5;
+    WAIT=2; //WAIT_BUYER_PAY（交易创建，等待买家付款）
+    SUCCESS=3; //TRADE_SUCCESS（交易支付成功）
+    FINISHED=4; //TRADE_FINISHED（交易结束，不可退款）
+    CLOSED=5; //TRADE_CLOSED（未付款交易超时关闭，或支付完成后全额退款）
+}
+
+//交易状态变化
+message StatusChange {
+    google.protobuf.Timestamp synced_at = 1; //同步时间
+    TradeStatus status = 2; 
+}
+
+//交易详情
+message TradeDetail {
+    string trade_no =1;
+    string out_trade_no =2;
+    string buyer_logon_id =3;
+    string trade_status =4;
+    string total_amount =5;
+    string receipt_amount =6;
+    string buyer_pay_amount =7;
+    string point_amount =8;
+    string invoice_amount =9;
+    string send_pay_date =10;
+    string store_id =11;
+    string terminal_id =12;
+    repeated FundBill fund_bill_list =13;
+    string store_name =14;
+    string buyer_user_id =15;
+}
+
+//交易支付使用的资金渠道
+message FundBill{
+    string fund_channel =1;
+    string amount =2;
+    string real_amount =3;
+    string fund_type = 4;
 }

@@ -1,21 +1,25 @@
 package server
 
 import (
-	"errors"
+	"encoding/hex"
+
+	"github.com/oklog/ulid"
 
 	"github.com/xy02/alipay/pb"
-	"github.com/xy02/utils"
 )
 
-var (
-	errIDType = errors.New("invalid id type")
-)
-
-func makeID(idType pb.IDType) ([]byte, string, error) {
+func stringifyID(id []byte, idType pb.IDType) string {
 	switch idType {
 	case pb.IDType_ULID:
-		id := utils.NewULID()
-		return id[:], id.String(), nil
+		tmp := &ulid.ULID{}
+		if err := tmp.UnmarshalBinary(id); err == nil {
+			return tmp.String()
+		}
+		fallthrough
+	case pb.IDType_UTF8:
+		return string(id)
+	default:
+		//hex
+		return hex.EncodeToString(id)
 	}
-	return nil, "", errIDType
 }

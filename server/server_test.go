@@ -8,6 +8,7 @@ import (
 
 	"github.com/xy02/alipay/pb"
 	"github.com/xy02/alipay/trade"
+	"github.com/xy02/utils"
 )
 
 var server *Server
@@ -33,10 +34,13 @@ func init() {
 }
 
 func TestServer_CreateQRTrade(t *testing.T) {
-	trade, err := server.CreateQRTrade(nil, &pb.CreateQRParam{
+	// id := []byte("ABC")
+	id := utils.NewULID()
+	trade, err := server.PrecreateTrade(nil, &pb.PrecreateParam{
+		TradeId:     id[:],
 		IdType:      pb.IDType_ULID,
-		Subject:     "xx product",
-		AmountInFen: 1,
+		Subject:     "xx_product",
+		AmountInFen: 2,
 		NotifyUrl:   "http://140.206.154.90:2222/test",
 	})
 	if err != nil {

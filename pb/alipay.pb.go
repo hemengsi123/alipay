@@ -8,18 +8,20 @@ It is generated from these files:
 	alipay.proto
 
 It has these top-level messages:
-	CreateQRParam
-	QueryQRParam
+	PrecreateParam
+	QueryParam
 	RefreshQRParam
-	QRTrade
+	Trade
+	StatusChange
 	TradeDetail
-	FundBillList
+	FundBill
 */
 package pb
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 
 import (
 	context "golang.org/x/net/context"
@@ -41,14 +43,20 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type IDType int32
 
 const (
-	IDType_ULID IDType = 0
+	IDType_HEX  IDType = 0
+	IDType_UTF8 IDType = 1
+	IDType_ULID IDType = 2
 )
 
 var IDType_name = map[int32]string{
-	0: "ULID",
+	0: "HEX",
+	1: "UTF8",
+	2: "ULID",
 }
 var IDType_value = map[string]int32{
-	"ULID": 0,
+	"HEX":  0,
+	"UTF8": 1,
+	"ULID": 2,
 }
 
 func (x IDType) String() string {
@@ -91,44 +99,53 @@ func (x TradeStatus) String() string {
 func (TradeStatus) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 // 创建QR交易的数据
-type CreateQRParam struct {
-	// 生成的交易号类型
-	IdType IDType `protobuf:"varint,1,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
-	// 付款主题
-	Subject string `protobuf:"bytes,2,opt,name=subject" json:"subject,omitempty"`
-	// 总金额
-	AmountInFen int64 `protobuf:"varint,3,opt,name=amount_in_fen,json=amountInFen" json:"amount_in_fen,omitempty"`
+type PrecreateParam struct {
+	// 交易号 小于32字节
+	TradeId []byte `protobuf:"bytes,1,opt,name=trade_id,json=tradeId,proto3" json:"trade_id,omitempty"`
+	// id类型
+	IdType IDType `protobuf:"varint,2,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
+	// 交易主题
+	Subject string `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
+	// 总金额，单位分
+	AmountInFen int64 `protobuf:"varint,4,opt,name=amount_in_fen,json=amountInFen" json:"amount_in_fen,omitempty"`
 	// 回调地址
-	NotifyUrl string `protobuf:"bytes,4,opt,name=notify_url,json=notifyUrl" json:"notify_url,omitempty"`
+	NotifyUrl string `protobuf:"bytes,5,opt,name=notify_url,json=notifyUrl" json:"notify_url,omitempty"`
 }
 
-func (m *CreateQRParam) Reset()                    { *m = CreateQRParam{} }
-func (m *CreateQRParam) String() string            { return proto.CompactTextString(m) }
-func (*CreateQRParam) ProtoMessage()               {}
-func (*CreateQRParam) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *PrecreateParam) Reset()                    { *m = PrecreateParam{} }
+func (m *PrecreateParam) String() string            { return proto.CompactTextString(m) }
+func (*PrecreateParam) ProtoMessage()               {}
+func (*PrecreateParam) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *CreateQRParam) GetIdType() IDType {
+func (m *PrecreateParam) GetTradeId() []byte {
+	if m != nil {
+		return m.TradeId
+	}
+	return nil
+}
+
+func (m *PrecreateParam) GetIdType() IDType {
 	if m != nil {
 		return m.IdType
 	}
-	return IDType_ULID
+	return IDType_HEX
 }
 
-func (m *CreateQRParam) GetSubject() string {
+func (m *PrecreateParam) GetSubject() string {
 	if m != nil {
 		return m.Subject
 	}
 	return ""
 }
 
-func (m *CreateQRParam) GetAmountInFen() int64 {
+func (m *PrecreateParam) GetAmountInFen() int64 {
 	if m != nil {
 		return m.AmountInFen
 	}
 	return 0
 }
 
-func (m *CreateQRParam) GetNotifyUrl() string {
+func (m *PrecreateParam) GetNotifyUrl() string {
 	if m != nil {
 		return m.NotifyUrl
 	}
@@ -136,38 +153,38 @@ func (m *CreateQRParam) GetNotifyUrl() string {
 }
 
 // 查询QR交易的数据
-type QueryQRParam struct {
-	// 生成的交易号类型
-	IdType IDType `protobuf:"varint,1,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
+type QueryParam struct {
 	// 交易号
-	Id string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	TradeId []byte `protobuf:"bytes,1,opt,name=trade_id,json=tradeId,proto3" json:"trade_id,omitempty"`
+	// id类型
+	IdType IDType `protobuf:"varint,2,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
 }
 
-func (m *QueryQRParam) Reset()                    { *m = QueryQRParam{} }
-func (m *QueryQRParam) String() string            { return proto.CompactTextString(m) }
-func (*QueryQRParam) ProtoMessage()               {}
-func (*QueryQRParam) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *QueryParam) Reset()                    { *m = QueryParam{} }
+func (m *QueryParam) String() string            { return proto.CompactTextString(m) }
+func (*QueryParam) ProtoMessage()               {}
+func (*QueryParam) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *QueryQRParam) GetIdType() IDType {
+func (m *QueryParam) GetTradeId() []byte {
+	if m != nil {
+		return m.TradeId
+	}
+	return nil
+}
+
+func (m *QueryParam) GetIdType() IDType {
 	if m != nil {
 		return m.IdType
 	}
-	return IDType_ULID
-}
-
-func (m *QueryQRParam) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
+	return IDType_HEX
 }
 
 // 刷新QR的数据
 type RefreshQRParam struct {
-	// 生成的交易号类型
-	IdType IDType `protobuf:"varint,1,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
 	// 交易号
-	Id string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	TradeId []byte `protobuf:"bytes,1,opt,name=trade_id,json=tradeId,proto3" json:"trade_id,omitempty"`
+	// id类型
+	IdType IDType `protobuf:"varint,2,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
 }
 
 func (m *RefreshQRParam) Reset()                    { *m = RefreshQRParam{} }
@@ -175,81 +192,122 @@ func (m *RefreshQRParam) String() string            { return proto.CompactTextSt
 func (*RefreshQRParam) ProtoMessage()               {}
 func (*RefreshQRParam) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
+func (m *RefreshQRParam) GetTradeId() []byte {
+	if m != nil {
+		return m.TradeId
+	}
+	return nil
+}
+
 func (m *RefreshQRParam) GetIdType() IDType {
 	if m != nil {
 		return m.IdType
 	}
-	return IDType_ULID
+	return IDType_HEX
 }
 
-func (m *RefreshQRParam) GetId() string {
+// 交易
+type Trade struct {
+	// 交易号
+	Id []byte `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// id类型
+	IdType        IDType                     `protobuf:"varint,2,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
+	Subject       string                     `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
+	AmountInFen   int64                      `protobuf:"varint,4,opt,name=amount_in_fen,json=amountInFen" json:"amount_in_fen,omitempty"`
+	QrCode        string                     `protobuf:"bytes,5,opt,name=qr_code,json=qrCode" json:"qr_code,omitempty"`
+	Status        TradeStatus                `protobuf:"varint,6,opt,name=status,enum=alipay.TradeStatus" json:"status,omitempty"`
+	StatusChanges []*StatusChange            `protobuf:"bytes,7,rep,name=status_changes,json=statusChanges" json:"status_changes,omitempty"`
+	Detail        *TradeDetail               `protobuf:"bytes,8,opt,name=detail" json:"detail,omitempty"`
+	CreatedAt     *google_protobuf.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt" json:"created_at,omitempty"`
+}
+
+func (m *Trade) Reset()                    { *m = Trade{} }
+func (m *Trade) String() string            { return proto.CompactTextString(m) }
+func (*Trade) ProtoMessage()               {}
+func (*Trade) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *Trade) GetId() []byte {
 	if m != nil {
 		return m.Id
 	}
-	return ""
+	return nil
 }
 
-// QR交易
-type QRTrade struct {
-	// 生成的交易号类型
-	IdType IDType `protobuf:"varint,1,opt,name=id_type,json=idType,enum=alipay.IDType" json:"id_type,omitempty"`
-	// 交易号
-	Id          string       `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-	Subject     string       `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
-	AmountInFen int64        `protobuf:"varint,4,opt,name=amount_in_fen,json=amountInFen" json:"amount_in_fen,omitempty"`
-	QrCode      string       `protobuf:"bytes,5,opt,name=qr_code,json=qrCode" json:"qr_code,omitempty"`
-	Detail      *TradeDetail `protobuf:"bytes,6,opt,name=detail" json:"detail,omitempty"`
-	Status      TradeStatus  `protobuf:"varint,7,opt,name=status,enum=alipay.TradeStatus" json:"status,omitempty"`
-}
-
-func (m *QRTrade) Reset()                    { *m = QRTrade{} }
-func (m *QRTrade) String() string            { return proto.CompactTextString(m) }
-func (*QRTrade) ProtoMessage()               {}
-func (*QRTrade) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *QRTrade) GetIdType() IDType {
+func (m *Trade) GetIdType() IDType {
 	if m != nil {
 		return m.IdType
 	}
-	return IDType_ULID
+	return IDType_HEX
 }
 
-func (m *QRTrade) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *QRTrade) GetSubject() string {
+func (m *Trade) GetSubject() string {
 	if m != nil {
 		return m.Subject
 	}
 	return ""
 }
 
-func (m *QRTrade) GetAmountInFen() int64 {
+func (m *Trade) GetAmountInFen() int64 {
 	if m != nil {
 		return m.AmountInFen
 	}
 	return 0
 }
 
-func (m *QRTrade) GetQrCode() string {
+func (m *Trade) GetQrCode() string {
 	if m != nil {
 		return m.QrCode
 	}
 	return ""
 }
 
-func (m *QRTrade) GetDetail() *TradeDetail {
+func (m *Trade) GetStatus() TradeStatus {
+	if m != nil {
+		return m.Status
+	}
+	return TradeStatus_UNKNOWN
+}
+
+func (m *Trade) GetStatusChanges() []*StatusChange {
+	if m != nil {
+		return m.StatusChanges
+	}
+	return nil
+}
+
+func (m *Trade) GetDetail() *TradeDetail {
 	if m != nil {
 		return m.Detail
 	}
 	return nil
 }
 
-func (m *QRTrade) GetStatus() TradeStatus {
+func (m *Trade) GetCreatedAt() *google_protobuf.Timestamp {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return nil
+}
+
+// 交易状态变化
+type StatusChange struct {
+	SyncedAt *google_protobuf.Timestamp `protobuf:"bytes,1,opt,name=synced_at,json=syncedAt" json:"synced_at,omitempty"`
+	Status   TradeStatus                `protobuf:"varint,2,opt,name=status,enum=alipay.TradeStatus" json:"status,omitempty"`
+}
+
+func (m *StatusChange) Reset()                    { *m = StatusChange{} }
+func (m *StatusChange) String() string            { return proto.CompactTextString(m) }
+func (*StatusChange) ProtoMessage()               {}
+func (*StatusChange) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *StatusChange) GetSyncedAt() *google_protobuf.Timestamp {
+	if m != nil {
+		return m.SyncedAt
+	}
+	return nil
+}
+
+func (m *StatusChange) GetStatus() TradeStatus {
 	if m != nil {
 		return m.Status
 	}
@@ -258,76 +316,27 @@ func (m *QRTrade) GetStatus() TradeStatus {
 
 // 交易详情
 type TradeDetail struct {
-	Code           string          `protobuf:"bytes,1,opt,name=code" json:"code,omitempty"`
-	Msg            string          `protobuf:"bytes,2,opt,name=msg" json:"msg,omitempty"`
-	SubCode        string          `protobuf:"bytes,3,opt,name=sub_code,json=subCode" json:"sub_code,omitempty"`
-	SubMsg         string          `protobuf:"bytes,4,opt,name=sub_msg,json=subMsg" json:"sub_msg,omitempty"`
-	OutTradeNo     string          `protobuf:"bytes,5,opt,name=out_trade_no,json=outTradeNo" json:"out_trade_no,omitempty"`
-	QrCode         string          `protobuf:"bytes,6,opt,name=qr_code,json=qrCode" json:"qr_code,omitempty"`
-	TradeNo        string          `protobuf:"bytes,7,opt,name=trade_no,json=tradeNo" json:"trade_no,omitempty"`
-	OpenId         string          `protobuf:"bytes,8,opt,name=open_id,json=openId" json:"open_id,omitempty"`
-	BuyerLogonId   string          `protobuf:"bytes,9,opt,name=buyer_logon_id,json=buyerLogonId" json:"buyer_logon_id,omitempty"`
-	TradeStatus    string          `protobuf:"bytes,10,opt,name=trade_status,json=tradeStatus" json:"trade_status,omitempty"`
-	TotalAmount    string          `protobuf:"bytes,11,opt,name=total_amount,json=totalAmount" json:"total_amount,omitempty"`
-	ReceiptAmount  string          `protobuf:"bytes,12,opt,name=receipt_amount,json=receiptAmount" json:"receipt_amount,omitempty"`
-	BuyerPayAmount string          `protobuf:"bytes,13,opt,name=buyer_pay_amount,json=buyerPayAmount" json:"buyer_pay_amount,omitempty"`
-	PointAmount    string          `protobuf:"bytes,14,opt,name=point_amount,json=pointAmount" json:"point_amount,omitempty"`
-	InvoiceAmount  string          `protobuf:"bytes,15,opt,name=invoice_amount,json=invoiceAmount" json:"invoice_amount,omitempty"`
-	SendPayDate    string          `protobuf:"bytes,16,opt,name=send_pay_date,json=sendPayDate" json:"send_pay_date,omitempty"`
-	AlipayStoreId  string          `protobuf:"bytes,17,opt,name=alipay_store_id,json=alipayStoreId" json:"alipay_store_id,omitempty"`
-	StoreId        string          `protobuf:"bytes,18,opt,name=store_id,json=storeId" json:"store_id,omitempty"`
-	TerminalId     string          `protobuf:"bytes,19,opt,name=terminal_id,json=terminalId" json:"terminal_id,omitempty"`
-	StoreName      string          `protobuf:"bytes,20,opt,name=store_name,json=storeName" json:"store_name,omitempty"`
-	BuyerUserId    string          `protobuf:"bytes,21,opt,name=buyer_user_id,json=buyerUserId" json:"buyer_user_id,omitempty"`
-	FundBillList   []*FundBillList `protobuf:"bytes,22,rep,name=fund_bill_list,json=fundBillList" json:"fund_bill_list,omitempty"`
+	TradeNo        string      `protobuf:"bytes,1,opt,name=trade_no,json=tradeNo" json:"trade_no,omitempty"`
+	OutTradeNo     string      `protobuf:"bytes,2,opt,name=out_trade_no,json=outTradeNo" json:"out_trade_no,omitempty"`
+	BuyerLogonId   string      `protobuf:"bytes,3,opt,name=buyer_logon_id,json=buyerLogonId" json:"buyer_logon_id,omitempty"`
+	TradeStatus    string      `protobuf:"bytes,4,opt,name=trade_status,json=tradeStatus" json:"trade_status,omitempty"`
+	TotalAmount    string      `protobuf:"bytes,5,opt,name=total_amount,json=totalAmount" json:"total_amount,omitempty"`
+	ReceiptAmount  string      `protobuf:"bytes,6,opt,name=receipt_amount,json=receiptAmount" json:"receipt_amount,omitempty"`
+	BuyerPayAmount string      `protobuf:"bytes,7,opt,name=buyer_pay_amount,json=buyerPayAmount" json:"buyer_pay_amount,omitempty"`
+	PointAmount    string      `protobuf:"bytes,8,opt,name=point_amount,json=pointAmount" json:"point_amount,omitempty"`
+	InvoiceAmount  string      `protobuf:"bytes,9,opt,name=invoice_amount,json=invoiceAmount" json:"invoice_amount,omitempty"`
+	SendPayDate    string      `protobuf:"bytes,10,opt,name=send_pay_date,json=sendPayDate" json:"send_pay_date,omitempty"`
+	StoreId        string      `protobuf:"bytes,11,opt,name=store_id,json=storeId" json:"store_id,omitempty"`
+	TerminalId     string      `protobuf:"bytes,12,opt,name=terminal_id,json=terminalId" json:"terminal_id,omitempty"`
+	FundBillList   []*FundBill `protobuf:"bytes,13,rep,name=fund_bill_list,json=fundBillList" json:"fund_bill_list,omitempty"`
+	StoreName      string      `protobuf:"bytes,14,opt,name=store_name,json=storeName" json:"store_name,omitempty"`
+	BuyerUserId    string      `protobuf:"bytes,15,opt,name=buyer_user_id,json=buyerUserId" json:"buyer_user_id,omitempty"`
 }
 
 func (m *TradeDetail) Reset()                    { *m = TradeDetail{} }
 func (m *TradeDetail) String() string            { return proto.CompactTextString(m) }
 func (*TradeDetail) ProtoMessage()               {}
-func (*TradeDetail) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *TradeDetail) GetCode() string {
-	if m != nil {
-		return m.Code
-	}
-	return ""
-}
-
-func (m *TradeDetail) GetMsg() string {
-	if m != nil {
-		return m.Msg
-	}
-	return ""
-}
-
-func (m *TradeDetail) GetSubCode() string {
-	if m != nil {
-		return m.SubCode
-	}
-	return ""
-}
-
-func (m *TradeDetail) GetSubMsg() string {
-	if m != nil {
-		return m.SubMsg
-	}
-	return ""
-}
-
-func (m *TradeDetail) GetOutTradeNo() string {
-	if m != nil {
-		return m.OutTradeNo
-	}
-	return ""
-}
-
-func (m *TradeDetail) GetQrCode() string {
-	if m != nil {
-		return m.QrCode
-	}
-	return ""
-}
+func (*TradeDetail) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *TradeDetail) GetTradeNo() string {
 	if m != nil {
@@ -336,9 +345,9 @@ func (m *TradeDetail) GetTradeNo() string {
 	return ""
 }
 
-func (m *TradeDetail) GetOpenId() string {
+func (m *TradeDetail) GetOutTradeNo() string {
 	if m != nil {
-		return m.OpenId
+		return m.OutTradeNo
 	}
 	return ""
 }
@@ -399,13 +408,6 @@ func (m *TradeDetail) GetSendPayDate() string {
 	return ""
 }
 
-func (m *TradeDetail) GetAlipayStoreId() string {
-	if m != nil {
-		return m.AlipayStoreId
-	}
-	return ""
-}
-
 func (m *TradeDetail) GetStoreId() string {
 	if m != nil {
 		return m.StoreId
@@ -418,6 +420,13 @@ func (m *TradeDetail) GetTerminalId() string {
 		return m.TerminalId
 	}
 	return ""
+}
+
+func (m *TradeDetail) GetFundBillList() []*FundBill {
+	if m != nil {
+		return m.FundBillList
+	}
+	return nil
 }
 
 func (m *TradeDetail) GetStoreName() string {
@@ -434,52 +443,55 @@ func (m *TradeDetail) GetBuyerUserId() string {
 	return ""
 }
 
-func (m *TradeDetail) GetFundBillList() []*FundBillList {
-	if m != nil {
-		return m.FundBillList
-	}
-	return nil
-}
-
-type FundBillList struct {
-	Amount      string `protobuf:"bytes,1,opt,name=amount" json:"amount,omitempty"`
-	FundChannel string `protobuf:"bytes,2,opt,name=fund_channel,json=fundChannel" json:"fund_channel,omitempty"`
+// 交易支付使用的资金渠道
+type FundBill struct {
+	FundChannel string `protobuf:"bytes,1,opt,name=fund_channel,json=fundChannel" json:"fund_channel,omitempty"`
+	Amount      string `protobuf:"bytes,2,opt,name=amount" json:"amount,omitempty"`
 	RealAmount  string `protobuf:"bytes,3,opt,name=real_amount,json=realAmount" json:"real_amount,omitempty"`
+	FundType    string `protobuf:"bytes,4,opt,name=fund_type,json=fundType" json:"fund_type,omitempty"`
 }
 
-func (m *FundBillList) Reset()                    { *m = FundBillList{} }
-func (m *FundBillList) String() string            { return proto.CompactTextString(m) }
-func (*FundBillList) ProtoMessage()               {}
-func (*FundBillList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (m *FundBill) Reset()                    { *m = FundBill{} }
+func (m *FundBill) String() string            { return proto.CompactTextString(m) }
+func (*FundBill) ProtoMessage()               {}
+func (*FundBill) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
-func (m *FundBillList) GetAmount() string {
-	if m != nil {
-		return m.Amount
-	}
-	return ""
-}
-
-func (m *FundBillList) GetFundChannel() string {
+func (m *FundBill) GetFundChannel() string {
 	if m != nil {
 		return m.FundChannel
 	}
 	return ""
 }
 
-func (m *FundBillList) GetRealAmount() string {
+func (m *FundBill) GetAmount() string {
+	if m != nil {
+		return m.Amount
+	}
+	return ""
+}
+
+func (m *FundBill) GetRealAmount() string {
 	if m != nil {
 		return m.RealAmount
 	}
 	return ""
 }
 
+func (m *FundBill) GetFundType() string {
+	if m != nil {
+		return m.FundType
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*CreateQRParam)(nil), "alipay.CreateQRParam")
-	proto.RegisterType((*QueryQRParam)(nil), "alipay.QueryQRParam")
+	proto.RegisterType((*PrecreateParam)(nil), "alipay.PrecreateParam")
+	proto.RegisterType((*QueryParam)(nil), "alipay.QueryParam")
 	proto.RegisterType((*RefreshQRParam)(nil), "alipay.RefreshQRParam")
-	proto.RegisterType((*QRTrade)(nil), "alipay.QRTrade")
+	proto.RegisterType((*Trade)(nil), "alipay.Trade")
+	proto.RegisterType((*StatusChange)(nil), "alipay.StatusChange")
 	proto.RegisterType((*TradeDetail)(nil), "alipay.TradeDetail")
-	proto.RegisterType((*FundBillList)(nil), "alipay.FundBillList")
+	proto.RegisterType((*FundBill)(nil), "alipay.FundBill")
 	proto.RegisterEnum("alipay.IDType", IDType_name, IDType_value)
 	proto.RegisterEnum("alipay.TradeStatus", TradeStatus_name, TradeStatus_value)
 }
@@ -495,14 +507,12 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Alipay service
 
 type AlipayClient interface {
-	// 创建QR交易
-	CreateQRTrade(ctx context.Context, in *CreateQRParam, opts ...grpc.CallOption) (*QRTrade, error)
-	// 查询QR交易的最新记录
-	QueryQRTrade(ctx context.Context, in *QueryQRParam, opts ...grpc.CallOption) (*QRTrade, error)
-	// 刷新QR
-	RefreshQR(ctx context.Context, in *RefreshQRParam, opts ...grpc.CallOption) (*QRTrade, error)
-	// 查询QR交易记录的所有变化
-	QueryQRTrades(ctx context.Context, in *QueryQRParam, opts ...grpc.CallOption) (Alipay_QueryQRTradesClient, error)
+	// 创建预交易
+	PrecreateTrade(ctx context.Context, in *PrecreateParam, opts ...grpc.CallOption) (*Trade, error)
+	// 查询交易
+	QueryTrade(ctx context.Context, in *QueryParam, opts ...grpc.CallOption) (*Trade, error)
+	// 刷新预交易的QR
+	RefreshQR(ctx context.Context, in *RefreshQRParam, opts ...grpc.CallOption) (*Trade, error)
 }
 
 type alipayClient struct {
@@ -513,26 +523,26 @@ func NewAlipayClient(cc *grpc.ClientConn) AlipayClient {
 	return &alipayClient{cc}
 }
 
-func (c *alipayClient) CreateQRTrade(ctx context.Context, in *CreateQRParam, opts ...grpc.CallOption) (*QRTrade, error) {
-	out := new(QRTrade)
-	err := grpc.Invoke(ctx, "/alipay.Alipay/CreateQRTrade", in, out, c.cc, opts...)
+func (c *alipayClient) PrecreateTrade(ctx context.Context, in *PrecreateParam, opts ...grpc.CallOption) (*Trade, error) {
+	out := new(Trade)
+	err := grpc.Invoke(ctx, "/alipay.Alipay/PrecreateTrade", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *alipayClient) QueryQRTrade(ctx context.Context, in *QueryQRParam, opts ...grpc.CallOption) (*QRTrade, error) {
-	out := new(QRTrade)
-	err := grpc.Invoke(ctx, "/alipay.Alipay/QueryQRTrade", in, out, c.cc, opts...)
+func (c *alipayClient) QueryTrade(ctx context.Context, in *QueryParam, opts ...grpc.CallOption) (*Trade, error) {
+	out := new(Trade)
+	err := grpc.Invoke(ctx, "/alipay.Alipay/QueryTrade", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *alipayClient) RefreshQR(ctx context.Context, in *RefreshQRParam, opts ...grpc.CallOption) (*QRTrade, error) {
-	out := new(QRTrade)
+func (c *alipayClient) RefreshQR(ctx context.Context, in *RefreshQRParam, opts ...grpc.CallOption) (*Trade, error) {
+	out := new(Trade)
 	err := grpc.Invoke(ctx, "/alipay.Alipay/RefreshQR", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -540,87 +550,53 @@ func (c *alipayClient) RefreshQR(ctx context.Context, in *RefreshQRParam, opts .
 	return out, nil
 }
 
-func (c *alipayClient) QueryQRTrades(ctx context.Context, in *QueryQRParam, opts ...grpc.CallOption) (Alipay_QueryQRTradesClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Alipay_serviceDesc.Streams[0], c.cc, "/alipay.Alipay/QueryQRTrades", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &alipayQueryQRTradesClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Alipay_QueryQRTradesClient interface {
-	Recv() (*QRTrade, error)
-	grpc.ClientStream
-}
-
-type alipayQueryQRTradesClient struct {
-	grpc.ClientStream
-}
-
-func (x *alipayQueryQRTradesClient) Recv() (*QRTrade, error) {
-	m := new(QRTrade)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // Server API for Alipay service
 
 type AlipayServer interface {
-	// 创建QR交易
-	CreateQRTrade(context.Context, *CreateQRParam) (*QRTrade, error)
-	// 查询QR交易的最新记录
-	QueryQRTrade(context.Context, *QueryQRParam) (*QRTrade, error)
-	// 刷新QR
-	RefreshQR(context.Context, *RefreshQRParam) (*QRTrade, error)
-	// 查询QR交易记录的所有变化
-	QueryQRTrades(*QueryQRParam, Alipay_QueryQRTradesServer) error
+	// 创建预交易
+	PrecreateTrade(context.Context, *PrecreateParam) (*Trade, error)
+	// 查询交易
+	QueryTrade(context.Context, *QueryParam) (*Trade, error)
+	// 刷新预交易的QR
+	RefreshQR(context.Context, *RefreshQRParam) (*Trade, error)
 }
 
 func RegisterAlipayServer(s *grpc.Server, srv AlipayServer) {
 	s.RegisterService(&_Alipay_serviceDesc, srv)
 }
 
-func _Alipay_CreateQRTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateQRParam)
+func _Alipay_PrecreateTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrecreateParam)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AlipayServer).CreateQRTrade(ctx, in)
+		return srv.(AlipayServer).PrecreateTrade(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/alipay.Alipay/CreateQRTrade",
+		FullMethod: "/alipay.Alipay/PrecreateTrade",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AlipayServer).CreateQRTrade(ctx, req.(*CreateQRParam))
+		return srv.(AlipayServer).PrecreateTrade(ctx, req.(*PrecreateParam))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Alipay_QueryQRTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryQRParam)
+func _Alipay_QueryTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryParam)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AlipayServer).QueryQRTrade(ctx, in)
+		return srv.(AlipayServer).QueryTrade(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/alipay.Alipay/QueryQRTrade",
+		FullMethod: "/alipay.Alipay/QueryTrade",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AlipayServer).QueryQRTrade(ctx, req.(*QueryQRParam))
+		return srv.(AlipayServer).QueryTrade(ctx, req.(*QueryParam))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -643,109 +619,84 @@ func _Alipay_RefreshQR_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Alipay_QueryQRTrades_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(QueryQRParam)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(AlipayServer).QueryQRTrades(m, &alipayQueryQRTradesServer{stream})
-}
-
-type Alipay_QueryQRTradesServer interface {
-	Send(*QRTrade) error
-	grpc.ServerStream
-}
-
-type alipayQueryQRTradesServer struct {
-	grpc.ServerStream
-}
-
-func (x *alipayQueryQRTradesServer) Send(m *QRTrade) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 var _Alipay_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "alipay.Alipay",
 	HandlerType: (*AlipayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateQRTrade",
-			Handler:    _Alipay_CreateQRTrade_Handler,
+			MethodName: "PrecreateTrade",
+			Handler:    _Alipay_PrecreateTrade_Handler,
 		},
 		{
-			MethodName: "QueryQRTrade",
-			Handler:    _Alipay_QueryQRTrade_Handler,
+			MethodName: "QueryTrade",
+			Handler:    _Alipay_QueryTrade_Handler,
 		},
 		{
 			MethodName: "RefreshQR",
 			Handler:    _Alipay_RefreshQR_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "QueryQRTrades",
-			Handler:       _Alipay_QueryQRTrades_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "alipay.proto",
 }
 
 func init() { proto.RegisterFile("alipay.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 837 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0xed, 0x6e, 0xdb, 0x36,
-	0x14, 0x8d, 0x62, 0x47, 0xb6, 0xaf, 0x64, 0x47, 0x63, 0xdb, 0x54, 0x1d, 0x30, 0xcc, 0x35, 0xf6,
-	0x61, 0x74, 0x40, 0x31, 0x64, 0xc0, 0x86, 0xf5, 0x5f, 0x6a, 0x3b, 0x9b, 0xb0, 0xcc, 0x4d, 0xe4,
-	0x18, 0x05, 0xfa, 0x47, 0xa0, 0x4d, 0x3a, 0x65, 0x21, 0x93, 0x2a, 0x45, 0x0d, 0xd0, 0x83, 0xec,
-	0x0d, 0xf7, 0x00, 0x03, 0xf6, 0x02, 0x03, 0x3f, 0x64, 0x3b, 0x58, 0x81, 0x7d, 0xfd, 0x8a, 0x79,
-	0xee, 0xb9, 0xf7, 0x5c, 0x1e, 0xde, 0x5c, 0x41, 0x88, 0x73, 0x56, 0xe0, 0xfa, 0x79, 0x21, 0x85,
-	0x12, 0xc8, 0xb7, 0xa7, 0xd1, 0xaf, 0x1e, 0xf4, 0x27, 0x92, 0x62, 0x45, 0x6f, 0xd2, 0x6b, 0x2c,
-	0xf1, 0x16, 0x7d, 0x09, 0x1d, 0x46, 0x32, 0x55, 0x17, 0x34, 0xf6, 0x86, 0xde, 0x78, 0x70, 0x3e,
-	0x78, 0xee, 0x32, 0x93, 0xe9, 0x6d, 0x5d, 0xd0, 0xd4, 0x67, 0x44, 0xff, 0x45, 0x31, 0x74, 0xca,
-	0x6a, 0xf5, 0x8e, 0xae, 0x55, 0x7c, 0x3c, 0xf4, 0xc6, 0xbd, 0xb4, 0x39, 0xa2, 0x11, 0xf4, 0xf1,
-	0x56, 0x54, 0x5c, 0x65, 0x8c, 0x67, 0x1b, 0xca, 0xe3, 0xd6, 0xd0, 0x1b, 0xb7, 0xd2, 0xc0, 0x82,
-	0x09, 0xbf, 0xa4, 0x1c, 0x7d, 0x02, 0xc0, 0x85, 0x62, 0x9b, 0x3a, 0xab, 0x64, 0x1e, 0xb7, 0x4d,
-	0x81, 0x9e, 0x45, 0x96, 0x32, 0x1f, 0xfd, 0x00, 0xe1, 0x4d, 0x45, 0x65, 0xfd, 0xaf, 0xbb, 0x1a,
-	0xc0, 0x31, 0x23, 0xae, 0xa1, 0x63, 0x46, 0x46, 0x09, 0x0c, 0x52, 0xba, 0x91, 0xb4, 0x7c, 0xfb,
-	0xbf, 0x4b, 0xfd, 0xe1, 0x41, 0xe7, 0x26, 0xbd, 0x95, 0x98, 0xd0, 0xff, 0x5c, 0xe4, 0xd0, 0xb5,
-	0xd6, 0xdf, 0xb8, 0xd6, 0xfe, 0xab, 0x6b, 0x8f, 0xa1, 0xf3, 0x5e, 0x66, 0x6b, 0x41, 0x68, 0x7c,
-	0x62, 0xb2, 0xfd, 0xf7, 0x72, 0x22, 0x08, 0x45, 0x5f, 0x81, 0x4f, 0xa8, 0xc2, 0x2c, 0x8f, 0xfd,
-	0xa1, 0x37, 0x0e, 0xce, 0x1f, 0x34, 0xed, 0x98, 0x76, 0xa7, 0x26, 0x94, 0x3a, 0x8a, 0x26, 0x97,
-	0x0a, 0xab, 0xaa, 0x8c, 0x3b, 0xa6, 0xf7, 0xfb, 0xe4, 0x85, 0x09, 0xa5, 0x8e, 0x32, 0xfa, 0xed,
-	0x04, 0x82, 0x83, 0x22, 0x08, 0x41, 0xdb, 0xe8, 0x7b, 0x46, 0xdf, 0xfc, 0x46, 0x11, 0xb4, 0xb6,
-	0xe5, 0x9d, 0xbb, 0xa5, 0xfe, 0x89, 0x9e, 0x40, 0xb7, 0xac, 0x56, 0xb6, 0xd3, 0xfd, 0x3d, 0x4d,
-	0xab, 0x8f, 0x8d, 0x03, 0x99, 0x4e, 0xb0, 0xcf, 0xee, 0x97, 0xd5, 0xea, 0xe7, 0xf2, 0x0e, 0x0d,
-	0x21, 0x14, 0x95, 0xca, 0x94, 0x16, 0xcb, 0xb8, 0x70, 0x37, 0x04, 0x51, 0x29, 0xa3, 0x3f, 0x17,
-	0x87, 0xd7, 0xf7, 0xef, 0x5d, 0xff, 0x09, 0x74, 0x77, 0x69, 0x1d, 0x2b, 0xa7, 0xf6, 0x39, 0xa2,
-	0xa0, 0x3c, 0x63, 0x24, 0xee, 0xda, 0x1c, 0x7d, 0x4c, 0x08, 0xfa, 0x0c, 0x06, 0xab, 0xaa, 0xa6,
-	0x32, 0xcb, 0xc5, 0x9d, 0x30, 0xf1, 0x9e, 0x89, 0x87, 0x06, 0xbd, 0xd2, 0x60, 0x42, 0xd0, 0x53,
-	0x08, 0x6d, 0x65, 0xe7, 0x18, 0x18, 0x4e, 0xa0, 0xf6, 0x4e, 0x19, 0x8a, 0x50, 0x38, 0xcf, 0xec,
-	0x4b, 0xc5, 0x81, 0xa3, 0x68, 0xec, 0xc2, 0x40, 0xe8, 0x73, 0x18, 0x48, 0xba, 0xa6, 0xac, 0x50,
-	0x0d, 0x29, 0x34, 0xa4, 0xbe, 0x43, 0x1d, 0x6d, 0x0c, 0x91, 0x6d, 0xa9, 0xc0, 0x75, 0x43, 0xec,
-	0x1b, 0xa2, 0x6d, 0xf5, 0x1a, 0xd7, 0x8e, 0xf9, 0x14, 0xc2, 0x42, 0x30, 0xbe, 0x2b, 0x37, 0xb0,
-	0x9a, 0x06, 0xdb, 0x6b, 0x32, 0xfe, 0x8b, 0x60, 0x6b, 0xda, 0x90, 0x4e, 0xad, 0xa6, 0x43, 0x1d,
-	0x6d, 0x04, 0xfd, 0x92, 0x72, 0x62, 0x24, 0x09, 0x56, 0x34, 0x8e, 0x6c, 0x29, 0x0d, 0x5e, 0xe3,
-	0x7a, 0x8a, 0x15, 0x45, 0x5f, 0xc0, 0xa9, 0x9d, 0x90, 0xac, 0x54, 0x42, 0x52, 0xed, 0xd5, 0x47,
-	0xb6, 0x96, 0x85, 0x17, 0x1a, 0x4d, 0x88, 0x79, 0xf5, 0x86, 0x80, 0xdc, 0xab, 0xbb, 0xd0, 0xa7,
-	0x10, 0x28, 0x2a, 0xb7, 0x8c, 0xe3, 0x5c, 0x47, 0x1f, 0xd8, 0xb7, 0x6d, 0xa0, 0x84, 0xe8, 0x85,
-	0x60, 0x73, 0x39, 0xde, 0xd2, 0xf8, 0xa1, 0x5d, 0x08, 0x06, 0x99, 0xe3, 0x2d, 0xd5, 0x6d, 0x5a,
-	0x6b, 0xaa, 0x92, 0x4a, 0x5d, 0xe1, 0x91, 0x6d, 0xd3, 0x80, 0xcb, 0x92, 0xca, 0x84, 0xa0, 0x17,
-	0x30, 0xd8, 0x54, 0x9c, 0x64, 0x2b, 0x96, 0xe7, 0x59, 0xce, 0x4a, 0x15, 0x9f, 0x0d, 0x5b, 0xe3,
-	0xe0, 0xfc, 0x61, 0x33, 0xdf, 0x97, 0x15, 0x27, 0x2f, 0x59, 0x9e, 0x5f, 0xb1, 0x52, 0xa5, 0xe1,
-	0xe6, 0xe0, 0x34, 0x7a, 0x07, 0xe1, 0x61, 0x14, 0x9d, 0x81, 0xef, 0x5c, 0xb3, 0x83, 0xee, 0x4e,
-	0xda, 0x78, 0xa3, 0xb1, 0x7e, 0x8b, 0x39, 0xa7, 0xb9, 0x9b, 0xf9, 0x40, 0x63, 0x13, 0x0b, 0xe9,
-	0xab, 0x4a, 0xba, 0x1f, 0x07, 0x3b, 0xfe, 0xa0, 0x21, 0x6b, 0xf9, 0x33, 0x04, 0xbe, 0xdd, 0x12,
-	0xa8, 0x0b, 0xed, 0xe5, 0x55, 0x32, 0x8d, 0x8e, 0x9e, 0xbd, 0x71, 0xff, 0x65, 0x6e, 0xa6, 0x02,
-	0xe8, 0x2c, 0xe7, 0x3f, 0xcd, 0x5f, 0xbd, 0x9e, 0x47, 0x47, 0xa8, 0x0f, 0xbd, 0xeb, 0x74, 0x36,
-	0x49, 0x67, 0x17, 0xb7, 0xb3, 0xc8, 0xd3, 0x49, 0xaf, 0x2f, 0x92, 0xdb, 0xe8, 0x58, 0xb3, 0x16,
-	0xcb, 0xc9, 0x64, 0xb6, 0x58, 0x44, 0x2d, 0x14, 0x42, 0xf7, 0x32, 0x99, 0x27, 0x8b, 0x1f, 0x67,
-	0xd3, 0xa8, 0x8d, 0x00, 0xfc, 0xc9, 0xd5, 0xab, 0xc5, 0x6c, 0x1a, 0x9d, 0x9c, 0xff, 0xee, 0x81,
-	0x7f, 0x61, 0x1c, 0x40, 0xdf, 0xef, 0xd7, 0xbd, 0x5d, 0x64, 0x8f, 0x1a, 0x6f, 0xee, 0x7d, 0x05,
-	0x3e, 0x3e, 0x6d, 0x60, 0xc7, 0x1b, 0x1d, 0xa1, 0xef, 0x76, 0x2b, 0xd9, 0x66, 0xee, 0x5c, 0x3d,
-	0x5c, 0xd4, 0x1f, 0x4a, 0xfc, 0x16, 0x7a, 0xbb, 0x15, 0x8c, 0xce, 0x9a, 0xf8, 0xfd, 0xad, 0xfc,
-	0xa1, 0xbc, 0x17, 0xd0, 0x3f, 0x14, 0x2c, 0xff, 0xb1, 0xe2, 0xd7, 0xde, 0xcb, 0xf6, 0x9b, 0xe3,
-	0x62, 0xb5, 0xf2, 0xcd, 0xc7, 0xee, 0x9b, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x0b, 0x79, 0x12,
-	0xc7, 0xfc, 0x06, 0x00, 0x00,
+	// 879 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0x5d, 0x8f, 0xda, 0x46,
+	0x14, 0x5d, 0x03, 0x6b, 0xf0, 0xb5, 0x71, 0xad, 0x69, 0x95, 0xba, 0x5b, 0x55, 0x21, 0xa8, 0x51,
+	0x51, 0x2a, 0x11, 0x75, 0x5b, 0xb5, 0x8d, 0xfa, 0x44, 0x80, 0x55, 0xac, 0xae, 0x08, 0x31, 0xa0,
+	0x54, 0x79, 0xb1, 0x06, 0x3c, 0x6c, 0x5c, 0x99, 0x19, 0x67, 0x3c, 0xae, 0xe4, 0xe7, 0xfe, 0x9d,
+	0xbc, 0xf4, 0x67, 0xf5, 0x5f, 0x54, 0xf3, 0xe1, 0x85, 0x6d, 0x1e, 0xf2, 0xb2, 0xca, 0x13, 0x9e,
+	0x33, 0xe7, 0xde, 0x73, 0xb9, 0x73, 0xe6, 0x0e, 0x78, 0x38, 0xcf, 0x0a, 0x5c, 0x8f, 0x0b, 0xce,
+	0x04, 0x43, 0xb6, 0x5e, 0x5d, 0x3c, 0xbc, 0x61, 0xec, 0x26, 0x27, 0x4f, 0x15, 0xba, 0xad, 0xf6,
+	0x4f, 0x45, 0x76, 0x20, 0xa5, 0xc0, 0x87, 0x42, 0x13, 0x87, 0xff, 0x58, 0xe0, 0x2f, 0x39, 0xd9,
+	0x71, 0x82, 0x05, 0x59, 0x62, 0x8e, 0x0f, 0xe8, 0x2b, 0xe8, 0x09, 0x8e, 0x53, 0x92, 0x64, 0x69,
+	0x68, 0x0d, 0xac, 0x91, 0x17, 0x77, 0xd5, 0x3a, 0x4a, 0xd1, 0x77, 0xd0, 0xcd, 0xd2, 0x44, 0xd4,
+	0x05, 0x09, 0x5b, 0x03, 0x6b, 0xe4, 0x5f, 0xfa, 0x63, 0x23, 0x1b, 0xcd, 0xd6, 0x75, 0x41, 0x62,
+	0x3b, 0x4b, 0xe5, 0x2f, 0x0a, 0xa1, 0x5b, 0x56, 0xdb, 0x3f, 0xc9, 0x4e, 0x84, 0xed, 0x81, 0x35,
+	0x72, 0xe2, 0x66, 0x89, 0x86, 0xd0, 0xc7, 0x07, 0x56, 0x51, 0x91, 0x64, 0x34, 0xd9, 0x13, 0x1a,
+	0x76, 0x06, 0xd6, 0xa8, 0x1d, 0xbb, 0x1a, 0x8c, 0xe8, 0x15, 0xa1, 0xe8, 0x1b, 0x00, 0xca, 0x44,
+	0xb6, 0xaf, 0x93, 0x8a, 0xe7, 0xe1, 0xb9, 0x4a, 0xe0, 0x68, 0x64, 0xc3, 0xf3, 0xe1, 0x12, 0xe0,
+	0x55, 0x45, 0x78, 0x7d, 0x6f, 0xe5, 0x0e, 0xd7, 0xe0, 0xc7, 0x64, 0xcf, 0x49, 0xf9, 0xf6, 0x55,
+	0x7c, 0x7f, 0x59, 0xff, 0x6d, 0xc1, 0xf9, 0x5a, 0x06, 0x21, 0x1f, 0x5a, 0xb7, 0x79, 0x5a, 0xd9,
+	0x27, 0xeb, 0xe3, 0x97, 0xd0, 0x7d, 0xc7, 0x93, 0x1d, 0x4b, 0x89, 0x69, 0xa2, 0xfd, 0x8e, 0x4f,
+	0x59, 0x4a, 0xd0, 0xf7, 0x60, 0x97, 0x02, 0x8b, 0xaa, 0x0c, 0x6d, 0x25, 0xff, 0x79, 0x23, 0xaf,
+	0xca, 0x5d, 0xa9, 0xad, 0xd8, 0x50, 0xd0, 0x6f, 0xe0, 0xeb, 0xaf, 0x64, 0xf7, 0x16, 0xd3, 0x1b,
+	0x52, 0x86, 0xdd, 0x41, 0x7b, 0xe4, 0x5e, 0x7e, 0xd1, 0x04, 0x69, 0xfe, 0x54, 0x6d, 0xc6, 0xfd,
+	0xf2, 0x64, 0x55, 0x4a, 0xa5, 0x94, 0x08, 0x9c, 0xe5, 0x61, 0x6f, 0x60, 0x8d, 0xdc, 0xff, 0x29,
+	0xcd, 0xd4, 0x56, 0x6c, 0x28, 0xe8, 0x19, 0x80, 0x36, 0x62, 0x9a, 0x60, 0x11, 0x3a, 0x2a, 0xe0,
+	0x62, 0xac, 0x2d, 0x3c, 0x6e, 0x2c, 0x3c, 0x5e, 0x37, 0x16, 0x8e, 0x1d, 0xc3, 0x9e, 0x88, 0xa1,
+	0x00, 0xef, 0xb4, 0x0c, 0xf4, 0x0b, 0x38, 0x65, 0x4d, 0x77, 0x3a, 0x93, 0xf5, 0xd1, 0x4c, 0x3d,
+	0x4d, 0x9e, 0x88, 0x93, 0xd6, 0xb4, 0x3e, 0xda, 0x9a, 0xe1, 0xfb, 0x0e, 0xb8, 0x27, 0x7f, 0xe4,
+	0xe8, 0x1a, 0xca, 0x94, 0xa8, 0x63, 0x5c, 0xb3, 0x60, 0x68, 0x00, 0x1e, 0xab, 0x44, 0x72, 0xbb,
+	0xdd, 0x52, 0xdb, 0xc0, 0x2a, 0xb1, 0x36, 0x8c, 0x6f, 0xc1, 0xdf, 0x56, 0x35, 0xe1, 0x49, 0xce,
+	0x6e, 0x18, 0x95, 0xc6, 0xd3, 0x47, 0xee, 0x29, 0xf4, 0x5a, 0x82, 0x51, 0x8a, 0x1e, 0x81, 0xa7,
+	0x73, 0x98, 0x2a, 0x3b, 0x8a, 0xe3, 0x8a, 0x63, 0x75, 0x8a, 0xc2, 0x04, 0xce, 0x13, 0xed, 0x05,
+	0x73, 0xf6, 0xae, 0xc2, 0x26, 0x0a, 0x42, 0x8f, 0xc1, 0xe7, 0x64, 0x47, 0xb2, 0x42, 0x34, 0x24,
+	0x5b, 0x91, 0xfa, 0x06, 0x35, 0xb4, 0x11, 0x04, 0xba, 0xa4, 0x02, 0xd7, 0x0d, 0xb1, 0xab, 0x88,
+	0xba, 0xd4, 0x25, 0xae, 0x0d, 0xf3, 0x11, 0x78, 0x05, 0xcb, 0xe8, 0x6d, 0xba, 0x9e, 0xd6, 0x54,
+	0xd8, 0x51, 0x33, 0xa3, 0x7f, 0xb1, 0x6c, 0x47, 0x1a, 0x92, 0xa3, 0x35, 0x0d, 0x6a, 0x68, 0x43,
+	0xe8, 0x97, 0x84, 0xa6, 0x4a, 0x32, 0xc5, 0x82, 0x84, 0xa0, 0x53, 0x49, 0x70, 0x89, 0xeb, 0x19,
+	0x16, 0x44, 0xf6, 0xb9, 0x14, 0x8c, 0xab, 0xdb, 0xe9, 0x9a, 0x7b, 0x21, 0xd7, 0x51, 0x8a, 0x1e,
+	0x82, 0x2b, 0x08, 0x3f, 0x64, 0x14, 0xe7, 0x72, 0xd7, 0xd3, 0x6d, 0x6e, 0xa0, 0x28, 0x45, 0x3f,
+	0x83, 0xbf, 0xaf, 0x68, 0x9a, 0x6c, 0xb3, 0x3c, 0x4f, 0xf2, 0xac, 0x14, 0x61, 0x5f, 0xd9, 0x39,
+	0x68, 0x0e, 0xfa, 0xaa, 0xa2, 0xe9, 0xf3, 0x2c, 0xcf, 0x63, 0x6f, 0x6f, 0xbe, 0xae, 0xb3, 0x52,
+	0xc8, 0xa1, 0xa4, 0x35, 0x29, 0x3e, 0x90, 0xd0, 0xd7, 0x43, 0x49, 0x21, 0x0b, 0x7c, 0x20, 0xb2,
+	0x6c, 0xdd, 0xaa, 0xaa, 0x24, 0x5c, 0x2a, 0x7f, 0xa6, 0xcb, 0x56, 0xe0, 0xa6, 0x24, 0x3c, 0x4a,
+	0x87, 0x7f, 0x5b, 0xd0, 0x6b, 0xb2, 0xcb, 0x8e, 0xa9, 0x3a, 0xe4, 0xa5, 0xa2, 0x24, 0x37, 0x7e,
+	0x71, 0x25, 0x36, 0xd5, 0x10, 0x7a, 0x00, 0xb6, 0xe9, 0x94, 0x76, 0x8b, 0x59, 0xc9, 0xff, 0xc8,
+	0xc9, 0xf1, 0x7c, 0xb5, 0x4d, 0x40, 0x42, 0xa6, 0x87, 0x5f, 0x83, 0xa3, 0x72, 0xab, 0x09, 0xa3,
+	0x1d, 0xd2, 0x93, 0x80, 0x9c, 0x29, 0x4f, 0x1e, 0x83, 0xad, 0xa7, 0x0c, 0xea, 0x42, 0xfb, 0xc5,
+	0xfc, 0x8f, 0xe0, 0x0c, 0xf5, 0xa0, 0xb3, 0x59, 0x5f, 0xfd, 0x1a, 0x58, 0xea, 0xeb, 0x3a, 0x9a,
+	0x05, 0xad, 0x27, 0x6f, 0x8c, 0xb5, 0x8d, 0xa9, 0x5c, 0xe8, 0x6e, 0x16, 0xbf, 0x2f, 0x5e, 0xbe,
+	0x5e, 0x04, 0x67, 0xa8, 0x0f, 0xce, 0x32, 0x9e, 0x4f, 0xe3, 0xf9, 0x64, 0x3d, 0xd7, 0x41, 0xaf,
+	0x27, 0xd1, 0x3a, 0x68, 0x49, 0xd6, 0x6a, 0x33, 0x9d, 0xce, 0x57, 0xab, 0xa0, 0x8d, 0x3c, 0xe8,
+	0x5d, 0x45, 0x8b, 0x68, 0xf5, 0x62, 0x3e, 0x0b, 0x3a, 0x08, 0xc0, 0x9e, 0x5e, 0xbf, 0x5c, 0xcd,
+	0x67, 0xc1, 0xf9, 0xe5, 0x7b, 0x0b, 0xec, 0x89, 0xea, 0x36, 0x7a, 0x76, 0xf2, 0xfe, 0xe8, 0x61,
+	0xf9, 0xa0, 0x39, 0x88, 0xbb, 0xef, 0xd2, 0x45, 0xff, 0xce, 0x4d, 0x1c, 0x9e, 0xa1, 0x1f, 0xcc,
+	0x3b, 0xa0, 0xc3, 0x50, 0xb3, 0x7d, 0x7c, 0x1b, 0x3e, 0x0c, 0xf9, 0x09, 0x9c, 0xdb, 0x41, 0x7f,
+	0x14, 0xba, 0x3b, 0xfb, 0x3f, 0x88, 0x7a, 0xde, 0x79, 0xd3, 0x2a, 0xb6, 0x5b, 0x5b, 0xcd, 0x8d,
+	0x1f, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0xaf, 0xa2, 0xce, 0x0e, 0x6a, 0x07, 0x00, 0x00,
 }

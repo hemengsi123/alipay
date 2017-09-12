@@ -3,6 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"time"
+
+	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/xy02/alipay/db"
 	"github.com/xy02/alipay/pb"
@@ -17,61 +20,63 @@ type Server struct {
 	alipayClient    *trade.AlipayClient
 }
 
-//CreateQRTrade 创建交易
-func (s *Server) CreateQRTrade(ctx context.Context, data *pb.CreateQRParam) (*pb.QRTrade, error) {
-	id, idStr, err := makeID(data.IdType)
-	if err != nil {
-		return nil, err
-	}
+//PrecreateTrade 预创建交易
+func (s *Server) PrecreateTrade(ctx context.Context, param *pb.PrecreateParam) (*pb.Trade, error) {
+	outTradeNo := stringifyID(param.TradeId, param.IdType)
+	//创建交易
 	jsonBytes, err := s.alipayClient.PrecreateTrade(trade.PrecreateParam{
-		Subject:     data.Subject,
-		TotalAmount: data.AmountInFen,
-		OutTradeNo:  idStr,
-		NotifyURL:   data.NotifyUrl,
+		Subject:     param.Subject,
+		TotalAmount: param.AmountInFen,
+		OutTradeNo:  outTradeNo,
+		NotifyURL:   param.NotifyUrl,
 	})
 	if err != nil {
 		return nil, err
 	}
-	//获取trade
+	//获取trade detail
 	detail := pb.TradeDetail{}
 	if err := json.Unmarshal(jsonBytes, &detail); err != nil {
 		return nil, err
 	}
+	detailDoc := db.Detail{}
+	if err := json.Unmarshal(jsonBytes, &detailDoc); err != nil {
+		return nil, err
+	}
 	//持久化
-	doc := &db.QRTradeDoc{
-		IDType:      data.IdType,
-		ID:          id,
-		Subject:     data.Subject,
-		AmountInFen: data.AmountInFen,
-		QRCode:      detail.QrCode,
+	doc := &db.TradeDoc{
+		ID:          param.TradeId,
+		IDType:      param.IdType,
+		Subject:     param.Subject,
+		AmountInFen: param.AmountInFen,
+		QRCode:      detailDoc.QRCode,
 		Status:      pb.TradeStatus_PRECREATE,
-		Detail:      detail,
+		Detail:      detailDoc,
 	}
 	if err := s.tradeCollection.Insert(doc); err != nil {
 		return nil, err
 	}
-	return &pb.QRTrade{
-		IdType:      data.IdType,
-		Id:          idStr,
-		Subject:     data.Subject,
-		AmountInFen: data.AmountInFen,
-		QrCode:      detail.QrCode,
+	//return
+	now := time.Now()
+	return &pb.Trade{
+		Id:          param.TradeId,
+		IdType:      param.IdType,
+		Subject:     param.Subject,
+		AmountInFen: param.AmountInFen,
+		QrCode:      detailDoc.QRCode,
 		Detail:      &detail,
 		Status:      pb.TradeStatus_PRECREATE,
+		CreatedAt: &timestamp.Timestamp{
+			Seconds: now.Unix(),
+		},
 	}, nil
 }
 
-//QueryQRTrade 查询
-func (s *Server) QueryQRTrade(ctx context.Context, data *pb.QueryQRParam) (*pb.QRTrade, error) {
+//QueryTrade 查询
+func (s *Server) QueryTrade(ctx context.Context, param *pb.QueryParam) (*pb.Trade, error) {
 	return nil, nil
 }
 
 //RefreshQR 刷新QR
-func (s *Server) RefreshQR(ctx context.Context, data *pb.RefreshQRParam) (*pb.QRTrade, error) {
-	return nil, nil
-}
-
-//QueryQRTrades 按交易号查询交易记录变化
-func (s *Server) QueryQRTrades(data *pb.CreateQRParam, stream pb.Alipay_QueryQRTradesServer) (*pb.QRTrade, error) {
+func (s *Server) RefreshQR(ctx context.Context, param *pb.RefreshQRParam) (*pb.Trade, error) {
 	return nil, nil
 }
