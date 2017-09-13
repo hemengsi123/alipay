@@ -1,8 +1,9 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
+
+	"golang.org/x/net/context"
 
 	"github.com/xy02/alipay/db"
 	"github.com/xy02/alipay/pb"
@@ -26,7 +27,6 @@ func (s *Server) PrecreateTrade(ctx context.Context, param *pb.PrecreateParam) (
 		Subject:     param.Subject,
 		TotalAmount: param.AmountInFen,
 		OutTradeNo:  outTradeNo,
-		NotifyURL:   param.NotifyUrl,
 	})
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (s *Server) QueryTrade(ctx context.Context, param *pb.QueryParam) (*pb.Trad
 		//交易已经结束
 		return parseDoc2Trade(tradeDoc), nil
 	}
-	outTradeNo := stringifyID(param.TradeId, param.IdType)
+	outTradeNo := stringifyID(param.TradeId, tradeDoc.IDType)
 	jsonBytes, err := s.alipayClient.QueryTrade(outTradeNo)
 	if err != nil {
 		return nil, err
@@ -87,6 +87,39 @@ func (s *Server) QueryTrade(ctx context.Context, param *pb.QueryParam) (*pb.Trad
 
 //RefreshQR 刷新QR
 func (s *Server) RefreshQR(ctx context.Context, param *pb.RefreshQRParam) (*pb.Trade, error) {
+	//查数据库
+	tradeDoc := &db.TradeDoc{}
+	if err := s.tradeCollection.Find(bson.M{
+		db.ID: param.TradeId,
+	}).One(tradeDoc); err != nil {
+		return nil, err
+	}
+	outTradeNo := stringifyID(param.TradeId, tradeDoc.IDType)
+	//创建预交易
+	jsonBytes, err := s.alipayClient.PrecreateTrade(trade.PrecreateParam{
+		Subject:     tradeDoc.Subject,
+		TotalAmount: tradeDoc.AmountInFen,
+		OutTradeNo:  outTradeNo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	//更新 QR
+	detailDoc := db.Detail{}
+	if err := json.Unmarshal(jsonBytes, &detailDoc); err != nil {
+		return nil, err
+	}
+	if detailDoc.QRCode != "" {
+		tradeDoc.QRCode = detailDoc.QRCode
+		tradeDoc.Detail = detailDoc
+		if err := s.tradeCollection.Update(bson.M{db.ID: param.TradeId}, tradeDoc); err != nil {
+			return nil, err
+		}
+	}
+	return parseDoc2Trade(tradeDoc), nil
+}
 
-	return nil, nil
+//WatchTrade 监控交易
+func (s *Server) WatchTrade(param *pb.WatchParam, stream pb.Alipay_WatchTradeServer) error {
+	return nil
 }

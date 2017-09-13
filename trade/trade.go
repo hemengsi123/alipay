@@ -19,6 +19,7 @@ type (
 		appID      string   //应用id号
 		signType   SignType //RSA,RSA2
 		signer     signer   //签名方案
+		notifyURL  string   //回掉地址
 	}
 	//AlipayConfig 支付宝配置
 	AlipayConfig struct {
@@ -28,13 +29,14 @@ type (
 		AlipayPubKey string
 		AlipayAppID  string
 		SignType     SignType
+		NotifyURL    string
 	}
 	//PrecreateParam 预创建数据
 	PrecreateParam struct {
 		Subject     string //交易主题
 		OutTradeNo  string //交易号
 		TotalAmount int64  //总价
-		NotifyURL   string //回调地址
+		// NotifyURL   string //回调地址
 	}
 )
 
@@ -80,7 +82,13 @@ func NewAlipayClient(config AlipayConfig) (*AlipayClient, error) {
 		appID:      config.AlipayAppID,
 		signType:   config.SignType,
 		signer:     signer,
+		notifyURL:  config.NotifyURL,
 	}, nil
+}
+
+//GetNotifyURL 返回通知地址
+func (client *AlipayClient) GetNotifyURL() string {
+	return client.notifyURL
 }
 
 //PrecreateTrade 预创建交易
@@ -106,7 +114,7 @@ func (client *AlipayClient) PrecreateTrade(param PrecreateParam) (json.RawMessag
 		// SignType:   alSignType,
 		// Timestamp:  time.Now().Format("2006-01-02 15:04:05"),
 		BizContent: string(bizContent),
-		NotifyURL:  param.NotifyURL,
+		NotifyURL:  client.notifyURL,
 	}
 	result := &preCreateResult{}
 	if err := client.request(req, result); err != nil {

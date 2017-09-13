@@ -13,46 +13,37 @@ service Alipay {
     rpc QueryTrade(QueryParam) returns (Trade) {}
     //刷新预交易的QR
     rpc RefreshQR(RefreshQRParam) returns (Trade) {}
-    // //查询交易的所有QR变化，发现没这种需求，还是注释了吧
-    // rpc QueryQRLogs(QueryQRLogsParam) returns (stream QRLog) {}
+    //监控交易变化
+    rpc WatchTrade(WatchParam) returns (stream Trade) {}
+}
+
+//监控
+message WatchParam {
+    string trade_id =1;
 }
 
 //创建QR交易的数据
 message PrecreateParam {
-    //交易号 小于32字节
-    bytes trade_id = 1;
-    //id类型
-    IDType id_type =2;
-    //交易主题
-    string subject = 3;
-    //总金额，单位分
-    int64 amount_in_fen = 4;
-    //回调地址
-    string notify_url = 5;
+    bytes trade_id = 1; //交易号 小于32字节
+    IDType id_type =2; //id类型
+    string subject = 3; //交易主题
+    int64 amount_in_fen = 4; //总金额，单位分
 }
 
 //查询QR交易的数据
 message QueryParam {
-    //交易号
-    bytes trade_id = 1;
-    //id类型
-    IDType id_type =2;
+    bytes trade_id = 1;     //交易号
 }
 
 //刷新QR的数据
 message RefreshQRParam {
-    //交易号
-    bytes trade_id = 1;
-    //id类型
-    IDType id_type =2;
+    bytes trade_id = 1;     //交易号
 }
 
 //交易
 message Trade {
-    //交易号
-    bytes id = 1;
-    //id类型
-    IDType id_type =2;
+    bytes id = 1; //交易号
+    IDType id_type =2; //id类型
     string subject = 3;
     int64 amount_in_fen = 4;
     string qr_code = 5;
