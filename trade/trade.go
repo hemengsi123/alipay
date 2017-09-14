@@ -3,6 +3,9 @@ package trade
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"sort"
+	"strings"
 
 	"github.com/xy02/utils"
 )
@@ -86,9 +89,14 @@ func NewAlipayClient(config AlipayConfig) (*AlipayClient, error) {
 	}, nil
 }
 
-//GetNotifyURL 返回通知地址
-func (client *AlipayClient) GetNotifyURL() string {
-	return client.notifyURL
+// //GetNotifyURL 返回通知地址
+// func (client *AlipayClient) GetNotifyURL() string {
+// 	return client.notifyURL
+// }
+
+//GetAppID 返回应用号
+func (client *AlipayClient) GetAppID() string {
+	return client.appID
 }
 
 //PrecreateTrade 预创建交易
@@ -152,4 +160,22 @@ func (client *AlipayClient) QueryTrade(outTradeNo string) (json.RawMessage, erro
 		return nil, err
 	}
 	return result.AlipayTradeQueryResponse, nil
+}
+
+//VerifyNotification 验证回掉
+func (client *AlipayClient) VerifyNotification(data url.Values) error {
+	data.Del(nameSignType) //生活号异步通知需要使用AlipaySignature.rsaCheckV2方法，会保留sign_type参数参与验签。
+	sign := data.Get(nameSign)
+	data.Del(nameSign)
+	pairs := []string{}
+	for key, value := range data {
+		if len(value) > 0 {
+			pairs = append(pairs, key+"="+value[0])
+		}
+	}
+	sort.Strings(pairs)
+	var str = strings.Join(pairs, "&")
+	// fmt.Println(len(pairs), cap(pairs), str)
+	// fmt.Println(sign)
+	return client.signer.verify([]byte(str), sign)
 }

@@ -30,6 +30,22 @@ func stringifyID(id []byte, idType pb.IDType) string {
 	}
 }
 
+func parseID(strID string, idType pb.IDType) ([]byte, error) {
+	switch idType {
+	case pb.IDType_ULID:
+		id, err := ulid.Parse(strID)
+		if err == nil {
+			return nil, err
+		}
+		return id[:], nil
+	case pb.IDType_UTF8:
+		return []byte(strID), nil
+	default:
+		//hex
+		return hex.DecodeString(strID)
+	}
+}
+
 func parseDoc2Trade(doc *db.TradeDoc) *pb.Trade {
 	return &pb.Trade{
 		Id:            doc.ID,

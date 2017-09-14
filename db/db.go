@@ -18,6 +18,7 @@ type TradeDoc struct {
 	Status        pb.TradeStatus `bson:"status"`                   //最新交易状态
 	StatusChanges []StatusChange `bson:"status_changes,omitempty"` //交易的同步记录
 	Detail        Detail         `bson:"detail"`                   //交易详情
+	AppID         string         `bson:"app_id"`                   //支付宝应用id，这个是重要的补充，所有订单都属于一个appID
 }
 
 //StatusChange 交易的状态记录，n:1 TradeDoc
@@ -44,6 +45,34 @@ type Detail struct {
 	StoreName      string     `bson:"store_name,omitempty" json:"store_name"`
 	BuyerUserID    string     `bson:"buyer_user_id,omitempty" json:"buyer_user_id"`
 	FundBillList   []FundBill `bson:"fund_bill_list,omitempty" json:"fund_bill_list"`
+	//以下是回掉通知才有的属性
+	// app_id string //支付宝应用id
+	// gmt_create string //创建交易的时间
+	//gmt_payment
+	// seller_id string //卖方id
+	// seller_email string
+	//buyer_id string //同buyer_user_id
+	//notify_type //trade_status_sync
+	//notify_time //发现同一个交易会重复通知多次
+	//open_id
+}
+
+//GetPBStatus 获取状态
+func (detail *Detail) GetPBStatus() pb.TradeStatus {
+	switch detail.TradeStatus {
+	case "":
+		return pb.TradeStatus_PRECREATE
+	case "WAIT_BUYER_PAY":
+		return pb.TradeStatus_WAIT
+	case "TRADE_CLOSED":
+		return pb.TradeStatus_CLOSED
+	case "TRADE_SUCCESS":
+		return pb.TradeStatus_SUCCESS
+	case "TRADE_FINISHED":
+		return pb.TradeStatus_FINISHED
+	default:
+		return pb.TradeStatus_UNKNOWN
+	}
 }
 
 //FundBill 交易支付使用的资金渠道
