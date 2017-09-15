@@ -48,9 +48,9 @@ message Trade {
     int64 amount_in_fen = 4;
     string qr_code = 5;
     TradeStatus status = 6;
-    repeated StatusChange status_changes = 7;
-    TradeDetail detail = 8;
-    google.protobuf.Timestamp created_at = 9; //同步时间
+    TradeDetail detail = 7;
+    google.protobuf.Timestamp created_at = 8; //同步时间
+    repeated StatusChange status_changes = 9;
 }
 
 //ID类型
