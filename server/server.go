@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/context"
 
@@ -27,46 +28,57 @@ func (s *Server) GetNotificationHandler() func(http.ResponseWriter, *http.Reques
 		err := r.ParseForm()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			return
+			panic(err)
 		}
 		// log.Println(string(body))
 		//验签
 		if err := s.alipayClient.VerifyNotification(r.Form); err != nil {
 			// log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
-			return
+			panic(err)
 		}
 		// log.Println(r.Form)
-		// fundBillList := []db.FundBill{}
-		// if err := json.Unmarshal([]byte(r.Form.Get("fund_bill_list")), fundBillList); err != nil {
-		// 	w.WriteHeader(http.StatusInternalServerError)
-		// 	return
-		// }
-		// detail := db.Detail{
-		// 	TradeNo:        r.Form.Get("trade_no"),
-		// 	OutTradeNo:     r.Form.Get("out_trade_no"),
-		// 	BuyerLogonID:   r.Form.Get("buyer_logon_id"),
-		// 	TradeStatus:    r.Form.Get("trade_status"),
-		// 	TotalAmount:    r.Form.Get("total_amount"),
-		// 	ReceiptAmount:  r.Form.Get("receipt_amount"),
-		// 	BuyerPayAmount: r.Form.Get("buyer_pay_amount"),
-		// 	PointAmount:    r.Form.Get("point_amount"),
-		// 	InvoiceAmount:  r.Form.Get("invoice_amount"),
-		// 	SendPayDate:    r.Form.Get("gmt_payment"),
-		// 	StoreID:        r.Form.Get("store_id"),
-		// 	TerminalID:     r.Form.Get("terminal_id"),
-		// 	StoreName:      r.Form.Get("store_name"),
-		// 	BuyerUserID:    r.Form.Get("buyer_id"),
-		// 	FundBillList:   fundBillList,
-		// }
-		// id, err := parseID(detail.OutTradeNo)
-		// if err != nil {
-		// 	w.WriteHeader(http.StatusInternalServerError)
-		// 	return
-		// }
-		// if err := s.tradeCollection.Update(bson.M{db.ID: param.TradeId}, tradeDoc); err != nil {
-		// 	return nil, err
-		// }
+		fundBillList := []db.FundBill{}
+		strFundList := strings.Replace(r.Form.Get("fund_bill_list"), "fundChannel", "fund_channel", 1)
+		if err := json.Unmarshal([]byte(strFundList), &fundBillList); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		detailDoc := db.Detail{
+			TradeNo:        r.Form.Get("trade_no"),
+			OutTradeNo:     r.Form.Get("out_trade_no"),
+			BuyerLogonID:   r.Form.Get("buyer_logon_id"),
+			TradeStatus:    r.Form.Get("trade_status"),
+			TotalAmount:    r.Form.Get("total_amount"),
+			ReceiptAmount:  r.Form.Get("receipt_amount"),
+			BuyerPayAmount: r.Form.Get("buyer_pay_amount"),
+			PointAmount:    r.Form.Get("point_amount"),
+			InvoiceAmount:  r.Form.Get("invoice_amount"),
+			SendPayDate:    r.Form.Get("gmt_payment"),
+			StoreID:        r.Form.Get("store_id"),
+			TerminalID:     r.Form.Get("terminal_id"),
+			StoreName:      r.Form.Get("store_name"),
+			BuyerUserID:    r.Form.Get("buyer_id"),
+			FundBillList:   fundBillList,
+		}
+		//查数据库
+		tradeDoc := &db.TradeDoc{}
+		if err := s.tradeCollection.Find(bson.M{
+			db.OutTradeNo: detailDoc.OutTradeNo,
+		}).One(tradeDoc); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		status := detailDoc.GetPBStatus()
+		if tradeDoc.Status != status {
+			//有变化
+			tradeDoc.Status = status
+			tradeDoc.Detail = detailDoc
+			if err := s.tradeCollection.Update(bson.M{db.OutTradeNo: detailDoc.OutTradeNo}, tradeDoc); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				panic(err)
+			}
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }

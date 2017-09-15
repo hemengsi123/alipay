@@ -9,16 +9,16 @@ import (
 
 //TradeDoc 交易文档
 type TradeDoc struct {
-	ObjectID      bson.ObjectId  `bson:"_id,omitempty"`            //数据库内部ID号，包含创建时间
-	ID            []byte         `bson:"id"`                       //交易号
-	IDType        pb.IDType      `bson:"id_type"`                  //交易号类型
-	Subject       string         `bson:"subject"`                  //主题
-	AmountInFen   int64          `bson:"amount_in_fen,minsize"`    //交易总价 单位：分
-	QRCode        string         `bson:"qr_code,omitempty"`        //预付款二维码地址，记录最后一个precreate的QR
-	Status        pb.TradeStatus `bson:"status"`                   //最新交易状态
-	StatusChanges []StatusChange `bson:"status_changes,omitempty"` //交易的同步记录
-	Detail        Detail         `bson:"detail"`                   //交易详情
-	AppID         string         `bson:"app_id"`                   //支付宝应用id，这个是重要的补充，所有订单都属于一个appID
+	ObjectID    bson.ObjectId  `bson:"_id,omitempty"`         //数据库内部ID号，包含创建时间
+	ID          []byte         `bson:"id"`                    //交易号
+	IDType      pb.IDType      `bson:"id_type"`               //交易号类型
+	Subject     string         `bson:"subject"`               //主题
+	AmountInFen int64          `bson:"amount_in_fen,minsize"` //交易总价 单位：分
+	QRCode      string         `bson:"qr_code,omitempty"`     //预付款二维码地址，记录最后一个precreate的QR
+	Status      pb.TradeStatus `bson:"status"`                //最新交易状态
+	// StatusChanges []StatusChange `bson:"status_changes,omitempty"` //交易的同步记录
+	Detail Detail `bson:"detail"` //交易详情
+	AppID  string `bson:"app_id"` //支付宝应用id，这个是重要的补充，所有订单都属于一个appID
 }
 
 //StatusChange 交易的状态记录，n:1 TradeDoc
@@ -77,10 +77,10 @@ func (detail *Detail) GetPBStatus() pb.TradeStatus {
 
 //FundBill 交易支付使用的资金渠道
 type FundBill struct {
-	Amount      string `json:"amount" bson:"amount"`
-	FundChannel string `json:"fund_channel" bson:"fund_channel"`
-	RealAmount  string `json:"real_amount" bson:"real_amount"`
-	FundType    string `json:"fund_type" bson:"fund_type"`
+	Amount      string `json:"amount" bson:"amount,omitempty"`
+	FundChannel string `json:"fund_channel" bson:"fund_channel,omitempty"`
+	RealAmount  string `json:"real_amount" bson:"real_amount,omitempty"`
+	FundType    string `json:"fund_type" bson:"fund_type,omitempty"`
 }
 
 // //PrecreatedDoc 交易的预创建记录，n:1 TradeDoc

@@ -61,7 +61,7 @@ func TestServer_PrecreateTrade(t *testing.T) {
 
 func TestServer_QueryTrade(t *testing.T) {
 	// id := []byte("ABC")
-	id := ulid.MustParse("01BSZREFBYK65K6K3YSGC0MNSH")
+	id := ulid.MustParse("01BT1KGP89QZEV2Q6W5EN4PBN9")
 	trade, err := server.QueryTrade(nil, &pb.QueryParam{
 		TradeId: id[:],
 	})

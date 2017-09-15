@@ -5,4 +5,5 @@ const (
 	ID           = "id"
 	ObjectID     = "_id"
 	ObjectIDDesc = "-" + ObjectID
+	OutTradeNo   = "detail.out_trade_no"
 )
