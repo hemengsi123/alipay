@@ -21,6 +21,13 @@ type Server struct {
 	alipayClient    *trade.AlipayClient
 }
 
+func (s *Server) SetTradeCollection(c *mgo.Collection) {
+	s.tradeCollection = c
+}
+func (s *Server) SetAlipayClient(c *trade.AlipayClient) {
+	s.alipayClient = c
+}
+
 //GetNotificationHandler 返回通知回掉处理器
 func (s *Server) GetNotificationHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
